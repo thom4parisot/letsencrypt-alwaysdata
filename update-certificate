@@ -1,0 +1,108 @@
+#!/bin/bash
+
+set -e
+
+# Use > 1 to consume two arguments per pass in the loop (e.g. each
+# argument has a corresponding value to go with it).
+# Use > 0 to consume one or more arguments per pass in the loop (e.g.
+# some arguments don't have a corresponding value to go with it such
+# as in the --default example).
+# note: if this is set to > 0 the /etc/hosts part is not recognized ( may be a bug )
+while [[ $# > 1 ]]
+do
+key="$1"
+
+case $key in
+    -c|--cert-name)
+    CERTIFICATE_NAME="$2"
+    shift # past argument
+    ;;
+    -s|--site-dir)
+    SITE_DIR="$2"
+    shift # past argument
+    ;;
+    -l|--letsencrypt-options)
+    LETSENCRYPT_OPTIONS="$2"
+    shift # past argument
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
+done
+
+#
+# Functions
+#
+
+#
+# Usage: get_certificate_id 'cert_name'
+# Example: get_certificate_id 'sudweb.fr'
+# > 1442
+function get_certificate_id {
+  echo $(curl -sS --basic --user "$ALWAYSDATA_API_AUTH" https://api.alwaysdata.com/v1/ssl/ |
+jq -r --arg name $1 '.[] | if .name == $name then .id else empty end')
+}
+
+#
+# Usage: 
+# Example: 
+# > 1442
+function generate_certificate {
+  STDOUT=$(simp_le --email abuse@alwaysdata.com -f account_key.json -f fullchain.pem -f key.pem \
+	--default_root $SITE_DIR \
+	$LETSENCRYPT_OPTIONS)
+}
+
+function update_certificate {
+  PAYLOAD=$(jq -n -c -r --arg certificate "$(<fullchain.pem)" --arg key "$(<key.pem)" --arg id "$1" '{ id: $id, key: $key, certificate: $certificate }')
+
+  STDOUT=$(curl -v -X PUT -sS --basic --user "$ALWAYSDATA_API_AUTH" \
+		-H 'Content-Type: application/json' \
+		-d "$PAYLOAD" \
+		https://api.alwaysdata.com/v1/ssl/$1/)
+
+  # echo $STDOUT
+}
+
+function run_pretests {
+  # check for simp_le
+  STDOUT=$(simp_le --version)
+
+  if [ "$?" -ne "0" ]; then
+    echo "simp_le was not found within \$PATH"
+    exit 78
+  fi;
+
+  # check for jq
+  STDOUT=$(jq --version)
+  if [ "$?" -ne "0" ]; then
+    echo "jq>=1.5 was not found within \$PATH"
+    exit 78
+  fi;
+
+  # check for AUTH
+  if [ "$ALWAYSDATA_API_AUTH" == "" ]; then
+    echo "ALWAYSDATA_API_AUTH environment variable was not found."
+    exit 78
+  fi
+
+  # check existence of certificate
+  if [ "$(get_certificate_id $CERTIFICATE_NAME)" == "" ]; then
+    echo "Could not find certificate for $CERTIFICATE_NAME."
+    exit 78
+  fi
+}
+
+#
+# Run All
+#
+run_pretests
+
+CERTIFICATE_ID=$(get_certificate_id $CERTIFICATE_NAME)
+CERTIFICATE_PEM=$(<fullchain.pem)
+KEY_PEM=$(<key.pem)
+
+generate_certificate $CERTIFICATE_ID
+update_certificate $CERTIFICATE_ID $CERTIFICATE_PEM $KEY_PEM
