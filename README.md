@@ -28,7 +28,7 @@ update-certificate \
   --letsencrypt-options "-d example.com -d www.example.com"
 ```
 
-This is ideal to setup as a cronjob in order to 
+This is ideal to setup as a cronjob in order to execute `update-certificate` to renew your cert on time, automatically.
 
 `ALWAYSDATA_API_AUTH` environment variable must be set prior to running the script (and can be found under the [Profile section](https://admin.alwaysdata.com/admin/details/)). This way we avoid leaking the API key in your `history` logs.
 
