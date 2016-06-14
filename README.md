@@ -5,7 +5,7 @@ Update your SSL certs on alwaysdata via their REST API.
 It requires you to have the following binaries installed and available in your `$PATH`:
 
 - [`simp_le`](https://forum.alwaysdata.com/viewtopic.php?id=4631) (to call letsencrypt API);
-- [`jq`]() (to parse and builds REST payloads).
+- [`jq`](https://stedolan.github.io/jq/) (to parse and builds REST payloads).
 
 # Install
 
