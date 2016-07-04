@@ -42,7 +42,7 @@ update-certificate ...
 
 ## `--cert-name`
 
-This is the name of the certificate as found in the Alwaysdata admin interface.
+This is the name of the certificate as found [in the Alwaysdata admin interface](https://admin.alwaysdata.com/ssl/).
 
 Example: `--cert-name sudweb.fr`.
 
