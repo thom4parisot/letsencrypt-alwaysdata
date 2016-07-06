@@ -54,13 +54,17 @@ $JQ -r --arg name $1 '.[] | if .name == $name then .id else empty end')
 # Example:
 # > 1442
 function generate_certificate {
-  STDOUT=$($SIMP_LE --email abuse@alwaysdata.com -f account_key.json -f certificate.pem -f private-key.pem \
-	--default_root $SITE_DIR \
-	$LETSENCRYPT_OPTIONS)
+  STDOUT=$($SIMP_LE --email abuse@alwaysdata.com -f account_key.json -f fullchain.pem -f key.pem \
+	--default_root $SITE_DIR $LETSENCRYPT_OPTIONS)
+
+  STDOUT=$(openssl pkcs8 -topk8 -inform pem -in key.pem -outform pem -nocrypt -out private-key.pem)
 }
 
 function update_certificate {
-  PAYLOAD=$($JQ -n -c -r --arg certificate "$(<certificate.pem)" --arg key "$(<private-key.pem)" --arg id "$1" '{ id: $id, key: $key, certificate: $certificate }')
+  PAYLOAD=$($JQ -n -c -r \
+    --arg certificate "$(<fullchain.pem)" \
+    --arg key "$(<private-key.pem)" \
+    --arg id "$1" '{ id: $id, key: $key, certificate: $certificate }')
 
   STDOUT=$(curl -v -X PUT -sS --basic --user "$ALWAYSDATA_API_AUTH" \
 		-H 'Content-Type: application/json' \
