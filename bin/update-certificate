@@ -1,5 +1,9 @@
 #!/bin/bash
 
+CURRENT_DIRECTORY=$(dirname $(readlink -f $0))
+SIMP_LE="python2.7 -m simp_le"
+JQ="$CURRENT_DIRECTORY/../vendor/jq"
+
 set -e
 
 # Use > 1 to consume two arguments per pass in the loop (e.g. each
@@ -42,33 +46,35 @@ done
 # > 1442
 function get_certificate_id {
   echo $(curl -sS --basic --user "$ALWAYSDATA_API_AUTH" https://api.alwaysdata.com/v1/ssl/ |
-jq -r --arg name $1 '.[] | if .name == $name then .id else empty end')
+$JQ -r --arg name $1 '.[] | if .name == $name then .id else empty end')
 }
 
 #
-# Usage: 
-# Example: 
+# Usage:
+# Example:
 # > 1442
 function generate_certificate {
-  STDOUT=$(simp_le --email abuse@alwaysdata.com -f account_key.json -f fullchain.pem -f key.pem \
-	--default_root $SITE_DIR \
-	$LETSENCRYPT_OPTIONS)
+  STDOUT=$($SIMP_LE --email abuse@alwaysdata.com -f account_key.json -f fullchain.pem -f key.pem \
+	--default_root $SITE_DIR $LETSENCRYPT_OPTIONS)
+
+  STDOUT=$(openssl pkcs8 -topk8 -inform pem -in key.pem -outform pem -nocrypt -out private-key.pem)
 }
 
 function update_certificate {
-  PAYLOAD=$(jq -n -c -r --arg certificate "$(<fullchain.pem)" --arg key "$(<key.pem)" --arg id "$1" '{ id: $id, key: $key, certificate: $certificate }')
+  PAYLOAD=$($JQ -n -c -r \
+    --arg certificate "$(<fullchain.pem)" \
+    --arg key "$(<private-key.pem)" \
+    --arg id "$1" '{ id: $id, key: $key, certificate: $certificate }')
 
   STDOUT=$(curl -v -X PUT -sS --basic --user "$ALWAYSDATA_API_AUTH" \
 		-H 'Content-Type: application/json' \
 		-d "$PAYLOAD" \
 		https://api.alwaysdata.com/v1/ssl/$1/)
-
-  # echo $STDOUT
 }
 
 function run_pretests {
   # check for simp_le
-  STDOUT=$(simp_le --version)
+  STDOUT=$($SIMP_LE --version)
 
   if [ "$?" -ne "0" ]; then
     echo "simp_le was not found within \$PATH"
@@ -76,7 +82,7 @@ function run_pretests {
   fi;
 
   # check for jq
-  STDOUT=$(jq --version)
+  STDOUT=$($JQ --version)
   if [ "$?" -ne "0" ]; then
     echo "jq>=1.5 was not found within \$PATH"
     exit 78
@@ -101,8 +107,6 @@ function run_pretests {
 run_pretests
 
 CERTIFICATE_ID=$(get_certificate_id $CERTIFICATE_NAME)
-CERTIFICATE_PEM=$(<fullchain.pem)
-KEY_PEM=$(<key.pem)
 
-generate_certificate $CERTIFICATE_ID
-update_certificate $CERTIFICATE_ID $CERTIFICATE_PEM $KEY_PEM
+generate_certificate
+update_certificate $CERTIFICATE_ID
