@@ -14,6 +14,8 @@ cd /home/$USER
 
 git clone https://github.com/oncletom/letsencrypt-alwaysdata.git
 
+cd /home/$USER/letsencrypt-alwaysdata
+
 # installing jq
 wget -qO vendor/jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
 chmod +x vendor/jq
