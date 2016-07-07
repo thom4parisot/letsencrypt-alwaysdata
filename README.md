@@ -34,10 +34,10 @@ echo "export PATH=\"/home/\${USER}/letsencrypt-alwaysdata/bin:\${PATH}\"" >> /ho
 `ALWAYSDATA_API_AUTH` environment variable must be set prior to running the script (and can be found under the [Profile section](https://admin.alwaysdata.com/admin/details/)). This way we avoid leaking the API key in your `history` logs.
 
 ```bash
-cat /path/to/.bashenv
->> export ALWAYSDATA_API_AUTH="<api-key> account=<some-account>:"
+echo "export ALWAYSDATA_API_AUTH=\"<YOUR-API-KEY> account=<YOUR-ACCOUNT>:\"" >> /home/$USER/.profile
 
-source /path/to/.bashenv
+# e.g for oncletom.alwaysdata.net:
+echo "export ALWAYSDATA_API_AUTH=\"db7db0047d09458a4b422e0156eb46cb account=oncletom:\"" >> /home/$USER/.profile
 ```
 
 ## HTTP redirects
@@ -82,7 +82,6 @@ TBD.
 
 ```bash
 source /home/$USER/.profile
-source /home/$USER/.bashenv
 
 update-certificate \
   --cert-name example.com \
