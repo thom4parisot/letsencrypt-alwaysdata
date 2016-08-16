@@ -85,7 +85,7 @@ source /home/$USER/.profile
 
 update-certificate \
   --cert-name example.com \
-  --site-dir $HOME/www \
+  --site-dir /home/$USER/www \
   --letsencrypt-options "-d example.com -d www.example.com"
 ```
 
@@ -101,13 +101,13 @@ Example: `--cert-name sudweb.fr`.
 
 This is the location of the website served by the certificate.
 
-Example: `--site-dir $HOME/www`.
+Example: `--site-dir /home/$USER/www`.
 
 ## `--letsencrypt-options`
 
 Any other option you would like to pass to letsencrypt, like your domains and eventually their individual mapping.
 
-Example: `--letsencrypt-options "-d sudweb.fr -d www.sudweb.fr -d estcequecestientot.sudweb.fr:$HOME/estcequecestbientot"`.
+Example: `--letsencrypt-options "-d sudweb.fr -d www.sudweb.fr -d estcequecestientot.sudweb.fr:/home/$USER/estcequecestbientot"`.
 
 # License
 
