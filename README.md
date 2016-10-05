@@ -97,7 +97,7 @@ Optionally you can create a certificate from scratch. The value of the first `-d
 source /home/$USER/.profile
 
 letsencrypt-alwaysdata \
-  --create
+  --create \
   --cert-name example.com \
   --site-dir /home/$USER/www \
   --letsencrypt-options "-d example.com -d www.example.com"
