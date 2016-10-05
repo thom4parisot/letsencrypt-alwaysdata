@@ -1,6 +1,6 @@
 # letsencrypt-alwaysdata
 
-> Update your SSL certs on alwaysdata shared hosting via their REST API.
+> Create or update your SSL certs on alwaysdata shared hosting via their REST API.
 
 # Install
 
@@ -83,7 +83,21 @@ TBD.
 ```bash
 source /home/$USER/.profile
 
-update-certificate \
+letsencrypt-alwaysdata \
+  --cert-name example.com \
+  --site-dir /home/$USER/www \
+  --letsencrypt-options "-d example.com -d www.example.com"
+```
+
+## `--create`
+
+Optionally you can create a certificate from scratch. The value of the first `-d` will become your certificate name on alwaysdata.
+
+```bash
+source /home/$USER/.profile
+
+letsencrypt-alwaysdata \
+  --create
   --cert-name example.com \
   --site-dir /home/$USER/www \
   --letsencrypt-options "-d example.com -d www.example.com"

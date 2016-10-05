@@ -3,6 +3,7 @@
 CURRENT_DIRECTORY=$(dirname $(readlink -f $0))
 SIMP_LE="python2.7 -m simp_le"
 JQ="$CURRENT_DIRECTORY/../vendor/jq"
+ACTION="update"
 
 set -e
 
@@ -12,11 +13,14 @@ set -e
 # some arguments don't have a corresponding value to go with it such
 # as in the --default example).
 # note: if this is set to > 0 the /etc/hosts part is not recognized ( may be a bug )
-while [[ $# > 1 ]]
+while [[ $# > 0 ]]
 do
 key="$1"
 
 case $key in
+    --create)
+    ACTION="create"
+    ;;
     -c|--cert-name)
     CERTIFICATE_NAME="$2"
     shift # past argument
@@ -55,9 +59,22 @@ $JQ -r --arg name $1 '.[] | if .name == $name then .id else empty end')
 # > 1442
 function generate_certificate {
   STDOUT=$($SIMP_LE --email abuse@alwaysdata.com -f account_key.json -f fullchain.pem -f key.pem \
+  --tos_sha256 6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221 \
 	--default_root $SITE_DIR $LETSENCRYPT_OPTIONS)
 
   STDOUT=$(openssl pkcs8 -topk8 -inform pem -in key.pem -outform pem -nocrypt -out private-key.pem)
+}
+
+function create_certificate {
+  PAYLOAD=$($JQ -n -c -r \
+    --arg certificate "$(<fullchain.pem)" \
+    --arg key "$(<private-key.pem)" \
+    --arg id "$1" '{ key: $key, certificate: $certificate }')
+
+  STDOUT=$(curl -v -X POST -sS --basic --user "$ALWAYSDATA_API_AUTH" \
+                -H 'Content-Type: application/json' \
+                -d "$PAYLOAD" \
+                https://api.alwaysdata.com/v1/ssl/$1/)
 }
 
 function update_certificate {
@@ -95,7 +112,7 @@ function run_pretests {
   fi
 
   # check existence of certificate
-  if [ "$(get_certificate_id $CERTIFICATE_NAME)" == "" ]; then
+  if [ $ACTION == "update" -a "$(get_certificate_id $CERTIFICATE_NAME)" == "" ]; then
     echo "Could not find certificate for $CERTIFICATE_NAME."
     exit 78
   fi
@@ -109,4 +126,4 @@ run_pretests
 CERTIFICATE_ID=$(get_certificate_id $CERTIFICATE_NAME)
 
 generate_certificate
-update_certificate $CERTIFICATE_ID
+${ACTION}_certificate $CERTIFICATE_ID
