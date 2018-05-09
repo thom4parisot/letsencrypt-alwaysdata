@@ -2,6 +2,12 @@
 
 > Create or update your SSL certs on alwaysdata shared hosting via their REST API.
 
+# ⚡️⚡️⚡️ This repo is no longer relevant ⚡️⚡️⚡️
+
+[Thanks to alwaysdata for making this a native feature in 2016](https://blog.alwaysdata.com/2016/11/28/https-native-support-for-lets-encrypt/).
+
+The repo stays here to showcase how to use [alwaysdata API](https://help.alwaysdata.com/api/), which is quite neat.
+
 # Install
 
 The initial setup pulls the source code of this repository as well as its two dependencies:
